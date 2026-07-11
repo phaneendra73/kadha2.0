@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kadha2-backend",
+  "main": "src/index.js",
+  "compatibility_date": "2025-02-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "JWT_SECRET": "kadha2-super-secret-key-2026"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kadha2-db",
+      "database_id": "kadha2-db-local-id"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "kadha2-backend",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev src/index.js",
+    "deploy": "wrangler deploy --minify src/index.js",
+    "db:init": "wrangler d1 execute kadha2-db --local --file=schema.sql",
+    "db:seed": "wrangler d1 execute kadha2-db --local --file=seed.sql",
+    "db:remote-init": "wrangler d1 execute kadha2-db --remote --file=schema.sql",
+    "db:remote-seed": "wrangler d1 execute kadha2-db --remote --file=seed.sql"
+  },
+  "dependencies": {
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241230.0",
+    "wrangler": "^3.101.0"
+  }
+}

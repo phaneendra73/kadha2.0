@@ -1,0 +1,215 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap');
+
+@import "tailwindcss";
+
+/* =============================================
+   SHADCN UI + TAILWIND V4 COMPATIBILITY THEME
+   ============================================= */
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'Fira Code', monospace;
+}
+
+/* ── LIGHT THEME VARIABLES ── */
+:root {
+  --background: #ffffff;
+  --foreground: #09090b;
+
+  --card: #ffffff;
+  --card-foreground: #09090b;
+
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+
+  --primary: #00c96e; /* Neon Green */
+  --primary-foreground: #ffffff;
+
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #f8fafc;
+
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #00c96e;
+
+  --radius: 0.5rem;
+  --neon-glow: rgba(0, 201, 110, 0.15);
+  --neon-subtle: rgba(0, 201, 110, 0.05);
+
+  color-scheme: light;
+}
+
+/* ── DARK THEME VARIABLES ── */
+.dark {
+  --background: #030712;
+  --foreground: #f8fafc;
+
+  --card: #0a1121;
+  --card-foreground: #f8fafc;
+
+  --popover: #0a1121;
+  --popover-foreground: #f8fafc;
+
+  --primary: #00e57a; /* Neon Green */
+  --primary-foreground: #000000;
+
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+
+  --accent: #1e293b;
+  --accent-foreground: #f8fafc;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #f8fafc;
+
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #00e57a;
+
+  --radius: 0.5rem;
+  --neon-glow: rgba(0, 229, 122, 0.25);
+  --neon-subtle: rgba(0, 229, 122, 0.07);
+
+  color-scheme: dark;
+}
+
+/* ── BASE STYLES ── */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── PULSE GLOW FOR NEON ── */
+@keyframes pulse-neon {
+  0%, 100% { box-shadow: 0 0 6px var(--neon-glow); }
+  50%       { box-shadow: 0 0 20px var(--neon-glow), 0 0 40px var(--neon-subtle); }
+}
+.pulse-neon {
+  animation: pulse-neon 2.5s ease-in-out infinite;
+}
+
+/* ── GRADIENT TEXT ── */
+.gradient-text {
+  background: linear-gradient(135deg, #00e57a 0%, #00cfb4 40%, #00b4d8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── MARKDOWN READER STYLING ── */
+.markdown-body {
+  line-height: 1.85;
+}
+.markdown-body h1, .markdown-body h2,
+.markdown-body h3, .markdown-body h4 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  margin-top: 1.8em;
+  margin-bottom: 0.5em;
+}
+.markdown-body p  { margin-bottom: 1.25em; font-size: 1.05rem; }
+.markdown-body a  { color: var(--primary); text-underline-offset: 3px; }
+.markdown-body code {
+  font-family: 'Fira Code', monospace;
+  background-color: var(--neon-subtle);
+  color: var(--primary);
+  padding: 0.15em 0.4em;
+  border-radius: 5px;
+  font-size: 0.88em;
+}
+.markdown-body pre {
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 1.25rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+.markdown-body pre code { background: transparent; padding: 0; color: var(--foreground); }
+.markdown-body blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 1.25rem;
+  color: var(--muted-foreground);
+  font-style: italic;
+  margin: 1.5rem 0;
+}
+.markdown-body ul, .markdown-body ol { padding-left: 1.5rem; margin-bottom: 1.25em; }
+.markdown-body li { margin-bottom: 0.4em; }
+.markdown-body hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* spin helper */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.9s linear infinite; }
+
+/* ── RESPONSIVE COMPONENT CONTROLS ── */
+@utility hidden-on-mobile {
+  display: none !important;
+}
+@media (min-width: 768px) {
+  .hidden-on-mobile {
+    display: flex !important;
+  }
+}
+
+@utility visible-on-mobile {
+  display: flex !important;
+}
+@media (min-width: 768px) {
+  .visible-on-mobile {
+    display: none !important;
+  }
+}
+
