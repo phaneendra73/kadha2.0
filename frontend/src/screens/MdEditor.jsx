@@ -8,7 +8,7 @@ import { Input } from '../components/ui/Input.jsx';
 import { Label } from '../components/ui/Label.jsx';
 import useTags from '../hooks/useTags.js';
 import { useToast } from '../components/Toaster.jsx';
-import { FiArrowLeft, FiSave, FiEye, FiEdit, FiLoader } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiEye, FiEdit, FiLoader, FiFileText, FiImage, FiSettings, FiClock, FiBold, FiItalic, FiCode, FiLink, FiList, FiMessageSquare, FiMinus } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { renderMarkdown } from '../utils/markdown.js';
 
@@ -69,135 +69,292 @@ export default function MdEditor() {
     }
   };
 
+  // Helper to insert markdown at the cursor
+  const insertAtCursor = (before, after = "") => {
+    const textarea = document.getElementById("editor-textarea");
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selected = text.substring(start, end);
+    const replacement = before + (selected || "text") + after;
+
+    setContent(
+      text.substring(0, start) +
+      replacement +
+      text.substring(end)
+    );
+
+    // Refocus textarea and select the text
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + before.length,
+        start + before.length + (selected || "text").length
+      );
+    }, 0);
+  };
+
+  // Word count stats
+  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
+  const charCount = content.length;
+  const readTime = Math.ceil(wordCount / 200) || 1;
+
   const modeBtnStyle = active => ({
     display: 'inline-flex', alignItems: 'center', gap: 6,
-    padding: '0.375rem 0.75rem', borderRadius: 6, border: 'none',
+    padding: '0.375rem 0.875rem', borderRadius: 6, border: 'none',
     background: active ? 'var(--neon-subtle)' : 'transparent',
-    color: active ? 'var(--neon)' : 'var(--fg-muted)',
+    color: active ? 'var(--primary)' : 'var(--muted-foreground)',
     fontWeight: 600, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.15s'
   });
 
+  const toolbarBtnStyle = {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    width: 28, height: 28, borderRadius: 6, border: 'none',
+    background: 'transparent', color: 'var(--muted-foreground)',
+    cursor: 'pointer', transition: 'all 0.1s ease',
+  };
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+    <div className="min-h-screen flex flex-col bg-background">
       <Appbar />
-      <main style={{ flex: 1, maxWidth: 1280, margin: '0 auto', width: '100%', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
-        {/* Header toolbar */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Button variant="outline" size="icon" onClick={() => navigate('/Admin')}>
-              <FiArrowLeft size={16} />
+      <main className="flex-1 flex flex-col lg:flex-row max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-6 gap-6">
+        
+        {/* LEFT COLUMN: Story configurations / Settings */}
+        <div className="w-full lg:w-80 flex flex-col gap-5 flex-shrink-0">
+          
+          {/* Back Action */}
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="icon" onClick={() => navigate('/Admin')} className="h-9 w-9">
+              <FiArrowLeft size={15} />
             </Button>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.5rem', fontWeight: 800, color: 'var(--fg)' }}>
+            <span className="font-heading font-extrabold text-lg text-foreground">
               {id ? '✏️ Edit Story' : '✨ New Story'}
-            </h1>
+            </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* Mode switch */}
-            <div style={{ display: 'flex', gap: 2, padding: 4, borderRadius: 8, background: 'var(--bg-alt)', border: '1px solid var(--border)' }}>
+
+          {/* Configuration Card */}
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm flex flex-col gap-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
+              <FiSettings size={15} className="text-primary" />
+              <span className="font-heading font-bold text-xs uppercase tracking-wider text-foreground">Story Settings</span>
+            </div>
+
+            {/* Title field */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="story-title">Story Title *</Label>
+              <Input
+                id="story-title"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Story title..."
+                className="w-full h-9 font-semibold text-sm border-border bg-transparent focus:border-primary"
+              />
+            </div>
+
+            {/* Cover image field */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cover-url">Cover Image URL</Label>
+              <div className="relative">
+                <FiImage className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
+                <Input
+                  id="cover-url"
+                  value={imageUrl}
+                  onChange={e => setImageUrl(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full h-9 pl-9 text-xs border-border bg-transparent focus:border-primary"
+                />
+              </div>
+            </div>
+
+            {/* Tag Selection */}
+            <div className="flex flex-col gap-2 pt-2">
+              <Label>Tags</Label>
+              <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
+                {tags.map(tag => {
+                  const selected = selectedTagIds.includes(tag.id);
+                  return (
+                    <button
+                      key={tag.id}
+                      onClick={() => toggleTag(tag.id)}
+                      style={{
+                        padding: '0.2rem 0.75rem', borderRadius: 9999, fontSize: '0.7rem', fontWeight: 700,
+                        border: '1px solid', cursor: 'pointer', transition: 'all 0.15s ease',
+                        background: selected ? 'var(--primary)' : 'transparent',
+                        color: selected ? '#000000' : 'var(--muted-foreground)',
+                        borderColor: selected ? 'var(--primary)' : 'var(--border)',
+                        boxShadow: selected ? '0 2px 8px var(--neon-glow)' : 'none',
+                      }}
+                      onMouseEnter={e => { if (!selected) e.currentTarget.style.borderColor = 'var(--primary)'; }}
+                      onMouseLeave={e => { if (!selected) e.currentTarget.style.borderColor = 'var(--border)'; }}
+                    >
+                      {tag.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <Button onClick={handleSave} disabled={loading} className="w-full h-9 mt-2">
+              {loading ? <FiLoader size={15} className="spin mr-2" /> : <FiSave size={15} className="mr-2" />}
+              Publish Story
+            </Button>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Writing Canvas */}
+        <div className="flex-1 flex flex-col rounded-xl border border-border bg-card overflow-hidden shadow-sm min-h-[500px]">
+          
+          {/* Canvas Header toolbar */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <FiFileText size={15} className="text-primary" />
+              <span className="font-heading font-extrabold text-xs uppercase tracking-widest text-muted-foreground">Editor Workspace</span>
+            </div>
+            
+            {/* View toggles */}
+            <div className="flex gap-1 p-1 rounded-lg border border-border bg-background">
               <button style={modeBtnStyle(mode === 'write')} onClick={() => setMode('write')}>
-                <FiEdit size={13} /> Write
+                <FiEdit size={12} /> Write
               </button>
               <button style={modeBtnStyle(mode === 'split')} onClick={() => setMode('split')} className="hidden md:inline-flex">
-                <FiEye size={13} /> Split
+                <FiEye size={12} /> Split
               </button>
               <button style={modeBtnStyle(mode === 'preview')} onClick={() => setMode('preview')}>
-                <FiEye size={13} /> Preview
+                <FiEye size={12} /> Preview
               </button>
             </div>
-            <Button onClick={handleSave} disabled={loading}>
-              {loading ? <FiLoader size={15} className="spin" /> : <FiSave size={15} />}
-              Publish
-            </Button>
           </div>
-        </div>
 
-        {/* Inputs */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <Label htmlFor="story-title">Story Title *</Label>
-            <Input
-              id="story-title"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="Give your story an inspiring title..."
-              style={{ fontWeight: 600 }}
-            />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <Label htmlFor="cover-url">Cover Image URL</Label>
-            <Input
-              id="cover-url"
-              value={imageUrl}
-              onChange={e => setImageUrl(e.target.value)}
-              placeholder="https://images.unsplash.com/..."
-            />
-          </div>
-        </div>
+          {/* Canvas Panels */}
+          <div className="flex-1 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-border">
+            
+            {/* Editor Workspace Panel */}
+            {(mode === 'write' || mode === 'split') && (
+              <div className="flex-1 flex flex-col min-h-[300px]">
+                
+                {/* Editor Text Formatting Toolbar */}
+                <div style={{ display: 'flex', gap: 4, padding: '6px 12px', borderBottom: '1px solid var(--border)', background: 'var(--muted)', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button
+                    style={toolbarBtnStyle}
+                    onClick={() => insertAtCursor('**', '**')}
+                    title="Bold"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
+                  >
+                    <FiBold size={14} />
+                  </button>
+                  <button
+                    style={toolbarBtnStyle}
+                    onClick={() => insertAtCursor('*', '*')}
+                    title="Italic"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
+                  >
+                    <FiItalic size={14} />
+                  </button>
+                  <button
+                    onClick={() => insertAtCursor('# ')}
+                    title="Heading 1"
+                    style={{ ...toolbarBtnStyle, fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 800 }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted-foreground)'; }}
+                  >
+                    H1
+                  </button>
+                  <button
+                    onClick={() => insertAtCursor('## ')}
+                    title="Heading 2"
+                    style={{ ...toolbarBtnStyle, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800 }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted-foreground)'; }}
+                  >
+                    H2
+                  </button>
+                  <button
+                    style={toolbarBtnStyle}
+                    onClick={() => insertAtCursor('`', '`')}
+                    title="Inline Code"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
+                  >
+                    <FiCode size={14} />
+                  </button>
+                  <button
+                    style={toolbarBtnStyle}
+                    onClick={() => insertAtCursor('[', '](https://)')}
+                    title="Add Link"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
+                  >
+                    <FiLink size={14} />
+                  </button>
+                  <button
+                    style={toolbarBtnStyle}
+                    onClick={() => insertAtCursor('\n- ')}
+                    title="List Item"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
+                  >
+                    <FiList size={14} />
+                  </button>
+                  <button
+                    style={toolbarBtnStyle}
+                    onClick={() => insertAtCursor('\n> ')}
+                    title="Blockquote"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
+                  >
+                    <FiMessageSquare size={13} />
+                  </button>
+                  <button
+                    style={toolbarBtnStyle}
+                    onClick={() => insertAtCursor('\n---\n')}
+                    title="Horizontal Divider"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
+                  >
+                    <FiMinus size={14} />
+                  </button>
+                </div>
 
-        {/* Tag pills select */}
-        <div className="card" style={{ padding: '1.25rem', marginBottom: '1.25rem' }}>
-          <Label style={{ marginBottom: 12, display: 'block' }}>Select Tags</Label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {tags.map(tag => {
-              const selected = selectedTagIds.includes(tag.id);
-              return (
-                <button
-                  key={tag.id}
-                  onClick={() => toggleTag(tag.id)}
-                  style={{
-                    padding: '0.25rem 0.875rem', borderRadius: 9999, fontSize: '0.75rem', fontWeight: 700,
-                    border: '1px solid', cursor: 'pointer', transition: 'all 0.15s ease',
-                    background: selected ? 'var(--neon)' : 'transparent',
-                    color: selected ? '#000' : 'var(--fg-muted)',
-                    borderColor: selected ? 'var(--neon)' : 'var(--border)',
-                    boxShadow: selected ? '0 2px 8px var(--neon-glow)' : 'none',
-                  }}
-                  onMouseEnter={e => { if (!selected) e.currentTarget.style.borderColor = 'var(--neon)'; }}
-                  onMouseLeave={e => { if (!selected) e.currentTarget.style.borderColor = 'var(--border)'; }}
-                >
-                  {tag.name}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Editor Workspace */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'row', gap: '1rem', minHeight: 400 }}>
-          {/* Write */}
-          {(mode === 'write' || mode === 'split') && (
-            <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 1rem', background: 'var(--bg-alt)', borderBottom: '1px solid var(--border)' }}>
-                <FiEdit size={13} style={{ color: 'var(--neon)' }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-muted)' }}>Markdown</span>
+                <textarea
+                  id="editor-textarea"
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                  placeholder={'Start writing in Markdown... Use the toolbar above to style your content.'}
+                  className="flex-1 w-full p-6 bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground font-mono leading-relaxed focus:ring-0"
+                  style={{ minHeight: '100%', fontFamily: "'Fira Code', monospace" }}
+                />
               </div>
-              <textarea
-                value={content}
-                onChange={e => setContent(e.target.value)}
-                placeholder={'# Heading\n\nStart writing Markdown...\n\n**Bold** | *Italic* | `code` | [link](url)'}
-                style={{
-                  flex: 1, width: '100%', padding: '1.25rem', background: 'transparent', border: 'none', outline: 'none',
-                  resize: 'none', fontSize: '0.875rem', color: 'var(--fg)', fontFamily: "'Fira Code', monospace", lineHeight: 1.6,
-                }}
-              />
-            </div>
-          )}
+            )}
 
-          {/* Preview */}
-          {(mode === 'preview' || mode === 'split') && (
-            <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 1rem', background: 'var(--bg-alt)', borderBottom: '1px solid var(--border)' }}>
-                <FiEye size={13} style={{ color: 'var(--neon)' }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-muted)' }}>Live Preview</span>
+            {/* Live Preview Panel */}
+            {(mode === 'preview' || mode === 'split') && (
+              <div className="flex-1 p-6 overflow-y-auto max-h-[600px] min-h-[300px] bg-background/20">
+                <div
+                  className="markdown-body text-foreground"
+                  dangerouslySetInnerHTML={{ __html: renderMarkdown(content || '*No content yet. Start typing to see results.*') }}
+                />
               </div>
-              <div
-                className="markdown-body"
-                style={{ flex: 1, padding: '1.25rem', overflowY: 'auto' }}
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
-              />
+            )}
+          </div>
+
+          {/* Status Bar */}
+          <div className="flex items-center justify-between px-4 py-2 border-t border-border bg-muted/20 text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground">
+            <div className="flex gap-4">
+              <span>Words: <strong className="text-foreground">{wordCount}</strong></span>
+              <span>Characters: <strong className="text-foreground">{charCount}</strong></span>
             </div>
-          )}
+            <div className="flex items-center gap-1">
+              <FiClock size={11} className="text-primary" />
+              <span>Est. Read Time: <strong className="text-foreground">{readTime} min</strong></span>
+            </div>
+          </div>
         </div>
+
       </main>
       <Footer />
     </div>
