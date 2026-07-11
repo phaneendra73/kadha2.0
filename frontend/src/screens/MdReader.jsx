@@ -42,6 +42,9 @@ export default function MdReader() {
   // Code Copy Button Injector
   useEffect(() => {
     if (!loading && blog) {
+      if (window.Prism) {
+        window.Prism.highlightAll();
+      }
       const preElements = document.querySelectorAll('.markdown-body pre');
       preElements.forEach((pre) => {
         if (pre.querySelector('.copy-code-btn')) return;

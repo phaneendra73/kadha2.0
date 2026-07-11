@@ -8,7 +8,7 @@ import { Input } from '../components/ui/Input.jsx';
 import { Label } from '../components/ui/Label.jsx';
 import useTags from '../hooks/useTags.js';
 import { useToast } from '../components/Toaster.jsx';
-import { FiArrowLeft, FiSave, FiEye, FiEdit, FiLoader, FiFileText, FiImage, FiSettings, FiClock, FiBold, FiItalic, FiCode, FiLink, FiList, FiMessageSquare, FiMinus } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiEye, FiEdit, FiLoader, FiFileText, FiImage, FiSettings, FiClock, FiBold, FiItalic, FiCode, FiLink, FiList, FiMessageSquare, FiMinus, FiTable } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { renderMarkdown } from '../utils/markdown.js';
 
@@ -16,7 +16,8 @@ export default function MdEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const { tags } = useTags();
+  const [tagRefreshTrigger, setTagRefreshTrigger] = useState(0);
+  const { tags } = useTags(tagRefreshTrigger);
 
   const [title, setTitle] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -25,6 +26,7 @@ export default function MdEditor() {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState('split');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [newTagInput, setNewTagInput] = useState('');
 
   useEffect(() => {
     if (!localStorage.getItem('jwt')) navigate('/Signin');
@@ -80,6 +82,29 @@ export default function MdEditor() {
     }
   };
 
+  const handleQuickTagCreate = async () => {
+    const name = newTagInput.trim();
+    if (!name) return;
+    try {
+      const token = localStorage.getItem('jwt');
+      const res = await axios.post(
+        `${getenv('APIURL')}/blog/tags/create`,
+        { tags: [name] },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setNewTagInput('');
+      setTagRefreshTrigger(p => p + 1);
+      
+      const createdTag = res.data.tags?.find(t => t.name.toLowerCase() === name.toLowerCase());
+      if (createdTag) {
+        setSelectedTagIds(prev => [...new Set([...prev, createdTag.id])]);
+      }
+      toast({ title: 'Tag added!', variant: 'success' });
+    } catch {
+      toast({ title: 'Failed to create tag', variant: 'destructive' });
+    }
+  };
+
   // Helper to insert markdown at the cursor
   const insertAtCursor = (before, after = "") => {
     const textarea = document.getElementById("editor-textarea");
@@ -107,6 +132,36 @@ export default function MdEditor() {
     }, 0);
   };
 
+  const insertLinePrefix = prefix => {
+    const textarea = document.getElementById('editor-textarea');
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selected = text.substring(start, end);
+
+    if (selected) {
+      const lines = selected.split('\n');
+      const replaced = lines.map(line => `${prefix}${line}`).join('\n');
+      setContent(text.substring(0, start) + replaced + text.substring(end));
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start, start + replaced.length);
+      }, 0);
+      return;
+    }
+
+    const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+    const updated = text.substring(0, lineStart) + prefix + text.substring(lineStart);
+    setContent(updated);
+    setTimeout(() => {
+      const cursorPos = start + prefix.length;
+      textarea.focus();
+      textarea.setSelectionRange(cursorPos, cursorPos);
+    }, 0);
+  };
+
   // Word count stats
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
   const charCount = content.length;
@@ -115,6 +170,9 @@ export default function MdEditor() {
   // Live Preview Code Copy Button Injector
   useEffect(() => {
     if (mode === 'preview' || mode === 'split') {
+      if (window.Prism) {
+        window.Prism.highlightAll();
+      }
       const preElements = document.querySelectorAll('.markdown-body pre');
       preElements.forEach((pre) => {
         if (pre.querySelector('.copy-code-btn')) return;
@@ -234,6 +292,31 @@ export default function MdEditor() {
             {/* Tag Selection */}
             <div className="flex flex-col gap-2 pt-2">
               <Label>Tags</Label>
+
+              {/* Inline Tag Creator */}
+              <div className="flex gap-1.5 mb-1">
+                <Input
+                  value={newTagInput}
+                  onChange={e => setNewTagInput(e.target.value)}
+                  placeholder="Create new tag..."
+                  className="h-7 text-[11px] px-2 border-border bg-transparent focus:border-primary"
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleQuickTagCreate();
+                    }
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-[10px] font-bold"
+                  onClick={handleQuickTagCreate}
+                >
+                  Add
+                </Button>
+              </div>
+
               <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
                 {tags.length === 0 ? (
                   <span className="text-[10px] text-muted-foreground">No tags found. Go to Tag Manager to add some.</span>
@@ -323,6 +406,15 @@ export default function MdEditor() {
                     <FiItalic size={14} />
                   </button>
                   <button
+                    onClick={() => insertAtCursor('~~', '~~')}
+                    title="Strikethrough"
+                    style={{ ...toolbarBtnStyle, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800, textDecoration: 'line-through' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted-foreground)'; }}
+                  >
+                    S
+                  </button>
+                  <button
                     onClick={() => insertAtCursor('# ')}
                     title="Heading 1"
                     style={{ ...toolbarBtnStyle, fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 800 }}
@@ -341,6 +433,24 @@ export default function MdEditor() {
                     H2
                   </button>
                   <button
+                    onClick={() => insertAtCursor('### ')}
+                    title="Heading 3"
+                    style={{ ...toolbarBtnStyle, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800 }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted-foreground)'; }}
+                  >
+                    H3
+                  </button>
+                  <button
+                    onClick={() => insertAtCursor('#### ')}
+                    title="Heading 4"
+                    style={{ ...toolbarBtnStyle, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800 }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted-foreground)'; }}
+                  >
+                    H4
+                  </button>
+                  <button
                     style={toolbarBtnStyle}
                     onClick={() => insertAtCursor('`', '`')}
                     title="Inline Code"
@@ -348,6 +458,24 @@ export default function MdEditor() {
                     onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
                   >
                     <FiCode size={14} />
+                  </button>
+                  <button
+                    style={toolbarBtnStyle}
+                    onClick={() => insertAtCursor('\n```\n', '\n```\n')}
+                    title="Code Block"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
+                  >
+                    <FiFileText size={14} />
+                  </button>
+                  <button
+                    style={toolbarBtnStyle}
+                    onClick={() => insertAtCursor('\n```js\n', '\n```\n')}
+                    title="JavaScript Code Block"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
+                  >
+                    JS
                   </button>
                   <button
                     style={toolbarBtnStyle}
@@ -360,12 +488,48 @@ export default function MdEditor() {
                   </button>
                   <button
                     style={toolbarBtnStyle}
+                    onClick={() => insertAtCursor('![', '](https://)')}
+                    title="Add Image"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
+                  >
+                    <FiImage size={14} />
+                  </button>
+                  <button
+                    style={toolbarBtnStyle}
+                    onClick={() => insertAtCursor('\n| Column 1 | Column 2 |\n| --- | --- |\n| Text | Text |\n')}
+                    title="Insert Table"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
+                  >
+                    <FiTable size={14} />
+                  </button>
+                  <button
+                    style={toolbarBtnStyle}
+                    onClick={() => insertLinePrefix('- [ ] ')}
+                    title="Task List"
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
+                  >
+                    ☑
+                  </button>
+                  <button
+                    style={toolbarBtnStyle}
                     onClick={() => insertAtCursor('\n- ')}
-                    title="List Item"
+                    title="Bullet List"
                     onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
                     onMouseLeave={e => e.currentTarget.style.color = 'var(--muted-foreground)'}
                   >
                     <FiList size={14} />
+                  </button>
+                  <button
+                    onClick={() => insertAtCursor('\n1. ')}
+                    title="Numbered List"
+                    style={{ ...toolbarBtnStyle, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800 }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted-foreground)'; }}
+                  >
+                    1.
                   </button>
                   <button
                     style={toolbarBtnStyle}
