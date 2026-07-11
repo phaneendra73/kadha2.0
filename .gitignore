@@ -4,3 +4,11 @@ dist/
 .dev.vars
 .DS_Store
 Thumbs.db
+.env
+.env.*
+.env.local
+.env.production
+wrangler.jsonc
+wrangler.json
+wrangler.toml
+
