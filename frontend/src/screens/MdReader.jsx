@@ -39,6 +39,58 @@ export default function MdReader() {
       .finally(() => setLoading(false));
   }, [blogId]);
 
+  // Code Copy Button Injector
+  useEffect(() => {
+    if (!loading && blog) {
+      const preElements = document.querySelectorAll('.markdown-body pre');
+      preElements.forEach((pre) => {
+        if (pre.querySelector('.copy-code-btn')) return;
+
+        pre.style.position = 'relative';
+
+        const button = document.createElement('button');
+        button.className = 'copy-code-btn';
+        button.innerHTML = 'Copy';
+        button.style.position = 'absolute';
+        button.style.top = '10px';
+        button.style.right = '10px';
+        button.style.fontSize = '10px';
+        button.style.fontWeight = '700';
+        button.style.textTransform = 'uppercase';
+        button.style.letterSpacing = '0.08em';
+        button.style.padding = '4px 8px';
+        button.style.borderRadius = '4px';
+        button.style.border = '1px solid var(--border)';
+        button.style.background = 'var(--card)';
+        button.style.color = 'var(--muted-foreground)';
+        button.style.cursor = 'pointer';
+        button.style.transition = 'all 0.15s ease';
+
+        button.addEventListener('mouseenter', () => {
+          button.style.color = 'var(--primary)';
+          button.style.borderColor = 'var(--primary)';
+          button.style.boxShadow = '0 0 8px var(--neon-glow)';
+        });
+        button.addEventListener('mouseleave', () => {
+          button.style.color = 'var(--muted-foreground)';
+          button.style.borderColor = 'var(--border)';
+          button.style.boxShadow = 'none';
+        });
+
+        button.addEventListener('click', async () => {
+          const codeText = pre.querySelector('code')?.innerText || '';
+          await navigator.clipboard.writeText(codeText);
+          button.innerHTML = 'Copied!';
+          setTimeout(() => {
+            button.innerHTML = 'Copy';
+          }, 2000);
+        });
+
+        pre.appendChild(button);
+      });
+    }
+  }, [loading, blog]);
+
   const copyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     toast({ title: 'Link copied!', variant: 'success' });

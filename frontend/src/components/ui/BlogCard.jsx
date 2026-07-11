@@ -13,70 +13,46 @@ export default function BlogCard({ blog }) {
 
   return (
     <motion.div
-      whileHover={{ y: -6 }}
-      transition={{ duration: 0.22, ease: 'easeOut' }}
+      whileHover={{ y: -5 }}
+      transition={{ duration: 0.2 }}
       onClick={() => navigate(`/Read?id=${blog.id}`)}
-      style={{ cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column' }}
+      className="cursor-pointer h-full flex flex-col group"
     >
-      <Card style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Image */}
-        <div style={{ position: 'relative', height: 190, overflow: 'hidden', flexShrink: 0 }}>
+      <Card className="h-full flex flex-col overflow-hidden border border-border bg-card hover:border-primary/50 transition-all duration-300 rounded-xl hover:shadow-[0_12px_40px_var(--neon-glow)]">
+        {/* Image wrapper */}
+        <div className="relative h-48 w-full overflow-hidden flex-shrink-0">
           <img
             src={blog.imageUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800'}
             alt={blog.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.45s ease' }}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
-            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.06)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
           />
-          <div style={{
-            position: 'absolute', top: 10, right: 10,
-            display: 'flex', alignItems: 'center', gap: 4,
-            padding: '3px 10px', borderRadius: 9999,
-            background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)',
-            fontSize: '0.68rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)',
-          }}>
-            <FiClock size={11} style={{ color: 'var(--neon)' }} />
-            4 min
+          <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-extrabold uppercase tracking-wider text-white/95">
+            <FiClock className="text-primary w-3 h-3" />
+            4 Min
           </div>
         </div>
 
-        <CardContent style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingTop: '1.25rem' }}>
+        <CardContent className="flex-1 flex flex-col p-5">
           {/* Tags */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-            {(blog.tags?.length ? blog.tags : ['Edge']).slice(0, 3).map(tag => (
-              <Badge key={tag}>{tag}</Badge>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {(blog.tags?.length ? blog.tags : ['Stories']).slice(0, 3).map(tag => (
+              <Badge key={tag} variant="outline" className="border-primary/20 bg-primary/5 text-primary text-[9px] px-2 py-0.5">{tag}</Badge>
             ))}
           </div>
 
           {/* Title */}
-          <h3 style={{
-            fontFamily: 'Outfit, sans-serif',
-            fontSize: '1rem', fontWeight: 700,
-            color: 'var(--fg)', lineHeight: 1.4,
-            marginBottom: '0.75rem',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}>
+          <h3 className="font-heading font-extrabold text-base text-foreground leading-snug mb-3 tracking-tight line-clamp-2 group-hover:text-primary transition-colors duration-200">
             {blog.title}
           </h3>
 
-          <div style={{ flex: 1 }} />
+          <div className="flex-1" />
 
-          {/* Footer */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginTop: '1rem', paddingTop: '0.875rem',
-            borderTop: '1px solid var(--border)',
-          }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--fg-muted)' }}>{date}</span>
-            <span style={{
-              display: 'flex', alignItems: 'center', gap: 3,
-              fontSize: '0.75rem', fontWeight: 600, color: 'var(--neon)',
-            }}>
-              Read <FiArrowUpRight size={13} />
+          {/* Card Footer info */}
+          <div className="flex items-center justify-between pt-4 mt-4 border-t border-border/60 text-xs text-muted-foreground font-medium">
+            <span>{date}</span>
+            <span className="flex items-center gap-1 text-primary font-bold group-hover:translate-x-1 transition-transform duration-200">
+              Read <FiArrowUpRight className="w-3.5 h-3.5" />
             </span>
           </div>
         </CardContent>
