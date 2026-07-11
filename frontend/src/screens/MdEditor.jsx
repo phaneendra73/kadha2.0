@@ -24,25 +24,36 @@ export default function MdEditor() {
   const [selectedTagIds, setSelectedTagIds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState('split');
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('jwt')) navigate('/Signin');
   }, [navigate]);
 
   useEffect(() => {
-    if (id && tags.length > 0) {
-      axios.get(`${getenv('APIURL')}/blog/get/${id}`)
-        .then(res => {
-          setTitle(res.data.title || '');
-          setImageUrl(res.data.imageUrl || '');
-          setContent(res.data.markdownContent || '');
-          if (res.data.tags) {
-            setSelectedTagIds(tags.filter(t => res.data.tags.includes(t.name)).map(t => t.id));
-          }
-        })
-        .catch(() => toast({ title: 'Error loading story', variant: 'destructive' }));
+    if (id) {
+      if (tags.length > 0 && !isLoaded) {
+        axios.get(`${getenv('APIURL')}/blog/get/${id}`)
+          .then(res => {
+            setTitle(res.data.title || '');
+            setImageUrl(res.data.imageUrl || '');
+            setContent(res.data.markdownContent || '');
+            if (res.data.tags) {
+              setSelectedTagIds(tags.filter(t => res.data.tags.includes(t.name)).map(t => t.id));
+            }
+            setIsLoaded(true);
+          })
+          .catch(() => toast({ title: 'Error loading story', variant: 'destructive' }));
+      }
+    } else {
+      // Clear fields if creating a new story
+      setTitle('');
+      setImageUrl('');
+      setContent('');
+      setSelectedTagIds([]);
+      setIsLoaded(false);
     }
-  }, [id, tags]);
+  }, [id, tags, isLoaded]);
 
   const toggleTag = tagId =>
     setSelectedTagIds(prev =>
@@ -172,27 +183,31 @@ export default function MdEditor() {
             <div className="flex flex-col gap-2 pt-2">
               <Label>Tags</Label>
               <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
-                {tags.map(tag => {
-                  const selected = selectedTagIds.includes(tag.id);
-                  return (
-                    <button
-                      key={tag.id}
-                      onClick={() => toggleTag(tag.id)}
-                      style={{
-                        padding: '0.2rem 0.75rem', borderRadius: 9999, fontSize: '0.7rem', fontWeight: 700,
-                        border: '1px solid', cursor: 'pointer', transition: 'all 0.15s ease',
-                        background: selected ? 'var(--primary)' : 'transparent',
-                        color: selected ? '#000000' : 'var(--muted-foreground)',
-                        borderColor: selected ? 'var(--primary)' : 'var(--border)',
-                        boxShadow: selected ? '0 2px 8px var(--neon-glow)' : 'none',
-                      }}
-                      onMouseEnter={e => { if (!selected) e.currentTarget.style.borderColor = 'var(--primary)'; }}
-                      onMouseLeave={e => { if (!selected) e.currentTarget.style.borderColor = 'var(--border)'; }}
-                    >
-                      {tag.name}
-                    </button>
-                  );
-                })}
+                {tags.length === 0 ? (
+                  <span className="text-[10px] text-muted-foreground">No tags found. Go to Tag Manager to add some.</span>
+                ) : (
+                  tags.map(tag => {
+                    const selected = selectedTagIds.includes(tag.id);
+                    return (
+                      <button
+                        key={tag.id}
+                        onClick={() => toggleTag(tag.id)}
+                        style={{
+                          padding: '0.2rem 0.75rem', borderRadius: 9999, fontSize: '0.7rem', fontWeight: 700,
+                          border: '1px solid', cursor: 'pointer', transition: 'all 0.15s ease',
+                          background: selected ? 'var(--primary)' : 'transparent',
+                          color: selected ? '#000000' : 'var(--muted-foreground)',
+                          borderColor: selected ? 'var(--primary)' : 'var(--border)',
+                          boxShadow: selected ? '0 2px 8px var(--neon-glow)' : 'none',
+                        }}
+                        onMouseEnter={e => { if (!selected) e.currentTarget.style.borderColor = 'var(--primary)'; }}
+                        onMouseLeave={e => { if (!selected) e.currentTarget.style.borderColor = 'var(--border)'; }}
+                      >
+                        {tag.name}
+                      </button>
+                    );
+                  })
+                )}
               </div>
             </div>
 
